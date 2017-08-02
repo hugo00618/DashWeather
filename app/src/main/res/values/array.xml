@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <array name="pref_temp_unit_values">
+        <item>C</item>
+        <item>F</item>
+    </array>
+
+    <array name="pref_temp_unit_entries">
+        <item>@string/pref_temp_unit_value_c</item>
+        <item>@string/pref_temp_unit_value_f</item>
+    </array>
+
+</resources>

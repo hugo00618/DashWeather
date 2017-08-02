@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory
+        android:key="prefAppearance"
+        android:title="Appearance">
+
+        <ListPreference
+            android:defaultValue="C"
+            android:entries="@array/pref_temp_unit_entries"
+            android:entryValues="@array/pref_temp_unit_values"
+            android:key="tempUnit"
+            android:title="@string/pref_temp_unit_title" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:key="prefGeo"
+        android:title="Location">
+
+        <SwitchPreference
+            android:key="gpsEnabled"
+            android:title="@string/pref_gps_title" />
+
+        <EditTextPreference
+            android:key="lat"
+            android:title="@string/pref_lat_title"
+            android:inputType="numberDecimal|numberSigned"/>
+
+        <EditTextPreference
+            android:key="lon"
+            android:title="@string/pref_lon_title"
+            android:inputType="numberDecimal|numberSigned"/>
+
+    </PreferenceCategory>
+
+
+    <PreferenceCategory
+        android:key="prefApi"
+        android:title="API Key">
+
+        <EditTextPreference
+            android:key="apiKey"
+            android:title="@string/pref_api_key_title" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="Help">
+
+        <Preference android:title="@string/pref_api_key_how_to_title" />
+
+    </PreferenceCategory>
+
+
+</PreferenceScreen>
+
