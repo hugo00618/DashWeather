@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="hugoyu.info.dashclockweather">
+    package="info.hugoyu.dashclockweather">
 
     <uses-permission android:name="android.permission.INTERNET" />
 
@@ -13,9 +13,9 @@
         android:theme="@style/AppTheme">
 
         <service
-            android:name=".WeatherExtension"
-            android:icon="@mipmap/ic_launcher"
-            android:label="ExtensionLabel"
+            android:name="info.hugoyu.dashclockweather.WeatherExtension"
+            android:icon="@mipmap/ic_clear_d"
+            android:label="@string/app_name"
             android:permission="com.google.android.apps.dashclock.permission.READ_EXTENSION_DATA">
             <intent-filter>
                 <action android:name="com.google.android.apps.dashclock.Extension" />
@@ -35,13 +35,21 @@
                 android:value=".SettingsActivity" />
         </service>
 
-        <activity android:name=".SettingsActivity">
+        <activity android:name="info.hugoyu.dashclockweather.SettingsActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <receiver android:name=".MyReceiver">
+            <intent-filter>
+                <action android:name="info.hugoyu.dashclockweather.SETTINGS_CHANGED">
+                </action>
+            </intent-filter>
+
+        </receiver>
     </application>
 
 </manifest>

@@ -1,4 +1,4 @@
-package hugoyu.info.dashclockweather;
+package info.hugoyu.dashclockweather;
 
 import org.junit.Test;
 

@@ -1,4 +1,4 @@
-package hugoyu.info.dashclockweather;
+package info.hugoyu.dashclockweather;
 
 import android.content.Context;
 import android.content.Intent;
@@ -9,7 +9,6 @@ import android.location.Geocoder;
 import android.location.LocationManager;
 import android.net.Uri;
 import android.preference.PreferenceManager;
-import android.util.Log;
 
 import com.google.android.apps.dashclock.api.DashClockExtension;
 import com.google.android.apps.dashclock.api.ExtensionData;
@@ -38,7 +37,7 @@ public class WeatherExtension extends DashClockExtension {
     public static char degreeChar = (char) 0x00B0; // character for °
 
     IntentFilter intentFilter;
-    TimeTickReceiver timeTickReceiver;
+    MyReceiver myReceiver;
 
     boolean isTempUnitC = true;
     String lat, lon;
@@ -50,21 +49,20 @@ public class WeatherExtension extends DashClockExtension {
 
         intentFilter = new IntentFilter();
         intentFilter.addAction(Intent.ACTION_TIME_TICK);
+        intentFilter.addAction("info.hugoyu.dashclockweather.SETTINGS_CHANGED");
 
-        timeTickReceiver = TimeTickReceiver.getInstance(this);
-        registerReceiver(timeTickReceiver, intentFilter);
+        myReceiver = MyReceiver.getInstance(this);
+        registerReceiver(myReceiver, intentFilter);
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        unregisterReceiver(timeTickReceiver);
+        unregisterReceiver(myReceiver);
     }
 
     @Override
     protected void onUpdateData(int reason) {
-        Log.d("DashWeather", "updated from onUpdate");
-
         // Get preference value.
         SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
 
@@ -76,8 +74,10 @@ public class WeatherExtension extends DashClockExtension {
         try {
             SharedUtil.isSettingValid(lat, lon, apiKey);
             publishWeatherInfo();
+            myReceiver.setIsSettingsValid(true);
         } catch (SharedUtil.SettingInvalidException e) {
             publishErrorInfo(e);
+            myReceiver.setIsSettingsValid(false);
         }
     }
 

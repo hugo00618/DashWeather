@@ -1,4 +1,4 @@
-package hugoyu.info.dashclockweather;
+package info.hugoyu.dashclockweather;
 
 /**
  * Created by Hugo on 2017-08-01.

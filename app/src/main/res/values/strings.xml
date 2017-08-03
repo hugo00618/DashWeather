@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">DashClock Weather</string>
+    <string name="app_name">DashWeather</string>
 
     <string name="pref_temp_unit_title">Temperature Unit</string>
     <string name="pref_temp_unit_value_c">\u00B0C</string>
