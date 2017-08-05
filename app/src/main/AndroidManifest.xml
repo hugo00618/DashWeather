@@ -12,6 +12,10 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyAedXk0j8FsTUUwj4RnEROCR7yGDrhnqSc"/>
+
         <service
             android:name="info.hugoyu.dashclockweather.WeatherExtension"
             android:icon="@mipmap/ic_clear_d"
@@ -35,7 +39,7 @@
                 android:value=".SettingsActivity" />
         </service>
 
-        <activity android:name="info.hugoyu.dashclockweather.SettingsActivity">
+        <activity android:name="info.hugoyu.dashclockweather.MyPreferenceActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

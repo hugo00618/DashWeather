@@ -191,16 +191,10 @@ public class WeatherExtension extends DashClockExtension {
 
         switch (e.getErrCode()) {
             case SharedUtil.SettingInvalidException.ERR_CODE_LAT_MISSING:
-                errorTitle += getString(R.string.pref_lat_title);
-                break;
             case SharedUtil.SettingInvalidException.ERR_CODE_LAT_INVALID:
-                errorTitle += getString(R.string.pref_lat_title);
-                break;
             case SharedUtil.SettingInvalidException.ERR_CODE_LON_MISSING:
-                errorTitle += getString(R.string.pref_lon_title);
-                break;
             case SharedUtil.SettingInvalidException.ERR_CODE_LON_INVALID:
-                errorTitle += getString(R.string.pref_lon_title);
+                errorTitle += getString(R.string.pref_loc_title);
                 break;
             case SharedUtil.SettingInvalidException.ERR_CODE_API_KEY_MISSING:
                 errorTitle += getString(R.string.pref_api_key_title);
@@ -213,7 +207,7 @@ public class WeatherExtension extends DashClockExtension {
                 .expandedTitle(errorTitle)
                 .expandedBody(errorBody)
 //                                        .contentDescription("Completely different text for accessibility if needed.")
-                .clickIntent(new Intent(this, SettingsActivity.class)));
+                .clickIntent(new Intent(this, MyPreferenceActivity.class)));
     }
 
     /**

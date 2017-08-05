@@ -21,15 +21,9 @@
             android:key="gpsEnabled"
             android:title="@string/pref_gps_title" />
 
-        <EditTextPreference
-            android:key="lat"
-            android:title="@string/pref_lat_title"
-            android:inputType="numberDecimal|numberSigned"/>
-
-        <EditTextPreference
-            android:key="lon"
-            android:title="@string/pref_lon_title"
-            android:inputType="numberDecimal|numberSigned"/>
+        <Preference
+            android:key="loc"
+            android:title="@string/pref_loc_title" />
 
     </PreferenceCategory>
 

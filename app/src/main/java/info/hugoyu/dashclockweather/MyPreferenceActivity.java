@@ -3,7 +3,7 @@ package info.hugoyu.dashclockweather;
 import android.os.Bundle;
 import android.preference.PreferenceActivity;
 
-public class SettingsActivity extends PreferenceActivity {
+public class MyPreferenceActivity extends PreferenceActivity {
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {

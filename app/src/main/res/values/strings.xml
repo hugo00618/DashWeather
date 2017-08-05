@@ -6,6 +6,7 @@
     <string name="pref_temp_unit_value_f">\u00B0F</string>
 
     <string name="pref_gps_title">Use GPS</string>
+    <string name="pref_loc_title">Location</string>
     <string name="pref_lat_title">Latitude</string>
     <string name="pref_lon_title">Longitude</string>
 

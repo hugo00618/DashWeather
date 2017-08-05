@@ -7,8 +7,8 @@ android {
         applicationId "hugoyu.info.dashclockweather"
         minSdkVersion 19
         targetSdkVersion 25
-        versionCode 3
-        versionName "Alpha 2.1"
+        versionCode 4
+        versionName "Alpha 3.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
@@ -22,6 +22,7 @@ android {
 dependencies {
     compile 'com.google.android.apps.dashclock:dashclock-api:2.0.0'
     compile 'com.loopj.android:android-async-http:1.4.9'
+    compile 'com.google.android.gms:play-services-places:11.0.4'
     compile fileTree(dir: 'libs', include: ['*.jar'])
     androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'

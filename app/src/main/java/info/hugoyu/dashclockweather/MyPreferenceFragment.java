@@ -1,14 +1,23 @@
 package info.hugoyu.dashclockweather;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.EditTextPreference;
 import android.preference.ListPreference;
+import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
 import android.preference.SwitchPreference;
+import android.util.Log;
+
+import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
+import com.google.android.gms.common.GooglePlayServicesRepairableException;
+import com.google.android.gms.location.places.Place;
+import com.google.android.gms.location.places.ui.PlaceAutocomplete;
+import com.google.android.gms.maps.model.LatLng;
 
 import java.util.Arrays;
 
@@ -18,10 +27,12 @@ import java.util.Arrays;
 
 public class MyPreferenceFragment extends PreferenceFragment implements SharedPreferences.OnSharedPreferenceChangeListener {
 
+    static final int PLACE_AUTOCOMPLETE_REQUEST_CODE = 1;
+
     // views
     ListPreference tempUnitPref;
     SwitchPreference gpsEnabledPref;
-    EditTextPreference latPref, lonPref;
+    Preference locPref;
     EditTextPreference apiKeyPref;
 
     Context context;
@@ -35,8 +46,7 @@ public class MyPreferenceFragment extends PreferenceFragment implements SharedPr
         // views
         tempUnitPref = (ListPreference) findPreference("tempUnit");
         gpsEnabledPref = (SwitchPreference) findPreference("gpsEnabled");
-        latPref = (EditTextPreference) findPreference("lat");
-        lonPref = (EditTextPreference) findPreference("lon");
+        locPref = findPreference("loc");
         apiKeyPref = (EditTextPreference) findPreference("apiKey");
 
         // models
@@ -45,18 +55,48 @@ public class MyPreferenceFragment extends PreferenceFragment implements SharedPr
 
         // init views
         updatePreferenceSummary();
-    }
 
-    @Override
-    public void onResume() {
-        super.onResume();
+        // listen shared preference changes
         getPreferenceScreen().getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
+
+        locPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+            @Override
+            public boolean onPreferenceClick(Preference preference) {
+                try {
+                    Intent intent =
+                            new PlaceAutocomplete.IntentBuilder(PlaceAutocomplete.MODE_OVERLAY)
+                                    .build(getActivity());
+                    startActivityForResult(intent, PLACE_AUTOCOMPLETE_REQUEST_CODE);
+                } catch (GooglePlayServicesRepairableException e) {
+                    // TODO: Handle the error.
+                } catch (GooglePlayServicesNotAvailableException e) {
+                    // TODO: Handle the error.
+                }
+                return false;
+            }
+        });
     }
 
     @Override
-    public void onPause() {
-        super.onPause();
-        getPreferenceScreen().getSharedPreferences().unregisterOnSharedPreferenceChangeListener(this);
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == PLACE_AUTOCOMPLETE_REQUEST_CODE) {
+            if (resultCode == Activity.RESULT_OK) {
+                Place place = PlaceAutocomplete.getPlace(context, data);
+                LatLng placeLatLng = place.getLatLng();
+
+                SharedPreferences.Editor sharedPrefsEdit = sharedPrefs.edit();
+                sharedPrefsEdit.putString("lat", String.valueOf(placeLatLng.latitude));
+                sharedPrefsEdit.putString("lon", String.valueOf(placeLatLng.longitude));
+                sharedPrefsEdit.putString("loc", (String) place.getName());
+                sharedPrefsEdit.apply();
+
+                Log.d("new lat" , PreferenceManager.getDefaultSharedPreferences(context).getString("lat", ""));
+            } else if (resultCode == PlaceAutocomplete.RESULT_ERROR) {
+
+            } else if (resultCode == Activity.RESULT_CANCELED) {
+
+            }
+        }
     }
 
     @Override
@@ -72,9 +112,7 @@ public class MyPreferenceFragment extends PreferenceFragment implements SharedPr
         String tempUnitValue = sharedPrefs.getString("tempUnit", "C");
         int tempUnitIdx = Arrays.asList(getResources().getStringArray(R.array.pref_temp_unit_values)).indexOf(tempUnitValue);
         tempUnitPref.setSummary(getResources().getStringArray(R.array.pref_temp_unit_entries)[tempUnitIdx]);
-
-        latPref.setSummary(sharedPrefs.getString("lat", ""));
-        lonPref.setSummary(sharedPrefs.getString("lon", ""));
+        locPref.setSummary(sharedPrefs.getString("loc", ""));
         apiKeyPref.setSummary(sharedPrefs.getString("apiKey", ""));
     }
 }
