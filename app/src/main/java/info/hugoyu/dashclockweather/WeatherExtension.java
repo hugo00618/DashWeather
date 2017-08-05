@@ -262,6 +262,7 @@ public class WeatherExtension extends DashClockExtension {
                 iconId = R.mipmap.ic_clear_n;
                 break;
             case "cloudy": // cloud_dn
+            case "nt_cloudy": // cloud_dn
                 iconId = R.mipmap.ic_cloud_dn;
                 break;
             case "fog": // fog_dn
