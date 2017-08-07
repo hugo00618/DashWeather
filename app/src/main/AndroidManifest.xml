@@ -2,6 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="info.hugoyu.dashclockweather">
 
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application
@@ -49,8 +51,8 @@
 
         <receiver android:name=".MyReceiver">
             <intent-filter>
-                <action android:name="info.hugoyu.dashclockweather.SETTINGS_CHANGED">
-                </action>
+                <action android:name="info.hugoyu.dashclockweather.ACTION_REFETCH"/>
+                <action android:name="info.hugoyu.dashclockweather.ACTION_REFRESH_UI_ONLY"/>
             </intent-filter>
 
         </receiver>

@@ -1,12 +1,8 @@
 package info.hugoyu.dashclockweather;
 
-import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.location.Address;
-import android.location.Geocoder;
-import android.location.LocationManager;
 import android.net.Uri;
 import android.preference.PreferenceManager;
 
@@ -19,8 +15,6 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.List;
-import java.util.Locale;
 
 import cz.msebera.android.httpclient.Header;
 
@@ -39,6 +33,13 @@ public class WeatherExtension extends DashClockExtension {
     IntentFilter intentFilter;
     MyReceiver myReceiver;
 
+    // weather info
+    int iconId;
+    double curTempDoubleC, curTempDoubleF;
+    String curWeatherDesc;
+    String body;
+
+    // pref
     boolean isTempUnitC = true;
     String lat, lon;
     String apiKey;
@@ -49,7 +50,6 @@ public class WeatherExtension extends DashClockExtension {
 
         intentFilter = new IntentFilter();
         intentFilter.addAction(Intent.ACTION_TIME_TICK);
-        intentFilter.addAction("info.hugoyu.dashclockweather.SETTINGS_CHANGED");
 
         myReceiver = MyReceiver.getInstance(this);
         registerReceiver(myReceiver, intentFilter);
@@ -73,15 +73,26 @@ public class WeatherExtension extends DashClockExtension {
 
         try {
             SharedUtil.isSettingValid(lat, lon, apiKey);
-            publishWeatherInfo();
+
             myReceiver.setIsSettingsValid(true);
+
+            switch (reason) {
+                case MyReceiver.UPDATE_REASON_UI_PREF_CHANGED:
+                    publishWeatherInfo();
+                    break;
+                default:
+//                    fetchAndPublishWeatherInfo();
+                    break;
+            }
         } catch (SharedUtil.SettingInvalidException e) {
             publishErrorInfo(e);
             myReceiver.setIsSettingsValid(false);
         }
+
+
     }
 
-    private void publishWeatherInfo() {
+    private void fetchAndPublishWeatherInfo() {
         final AsyncHttpClient client = new AsyncHttpClient();
 
         client.get(API_CALL_ROOT + apiKey + API_CALL_QUERY_CURRENT + lat + "," + lon + ".json",
@@ -96,31 +107,26 @@ public class WeatherExtension extends DashClockExtension {
                             String iconUrl = curWeather.getString("icon_url");
                             String iconNameWithExt = iconUrl.substring(iconUrl.lastIndexOf('/') + 1);
                             String iconName = iconNameWithExt.substring(0, iconNameWithExt.lastIndexOf('.'));
-                            final int iconId = getIconId(iconName);
+                            iconId = getIconId(iconName);
 
                             // current temperature
-                            double curTempDouble = 0;
-                            if (isTempUnitC) {
-                                curTempDouble = curWeather.getDouble("temp_c");
-                            } else {
-                                curTempDouble = curWeather.getDouble("temp_f");
-                            }
-                            final String curTempStr = new BigDecimal(curTempDouble).setScale(0, BigDecimal.ROUND_HALF_UP).toString();
+                            curTempDoubleC = curWeather.getDouble("temp_c");
+                            curTempDoubleF = curWeather.getDouble("temp_f");
 
                             // current relative humidity
                             final String curRelHum = curWeather.getString("relative_humidity");
 
                             // description
-                            final String curWeatherDesc = curWeather.getString("weather");
+                            curWeatherDesc = curWeather.getString("weather");
 
                             // geo info
-                            String geoStr = "";
+                            String locStr = "";
                             try {
-                                geoStr = getGeoStr(Double.parseDouble(lat), Double.parseDouble(lon));
+                                locStr = SharedUtil.getLocStr(getApplicationContext(), Double.parseDouble(lat), Double.parseDouble(lon));
                             } catch (IOException e) {
 
                             }
-                            final String finalGeoStr = geoStr;
+                            final String finalGeoStr = locStr;
 
                             client.get(API_CALL_ROOT + apiKey + API_CALL_QUERY_FORECAST + lat + "," + lon + ".json",
                                     null, new AsyncHttpResponseHandler() {
@@ -131,7 +137,7 @@ public class WeatherExtension extends DashClockExtension {
                                                 JSONObject forecast = responseForecast.getJSONObject("forecast");
                                                 JSONObject todayForecast = forecast.getJSONObject("simpleforecast").getJSONArray("forecastday").getJSONObject(0);
 
-                                                String body = "";
+                                                body = "";
 
                                                 // high/low
                                                 String highTemp = "", lowTemp = "";
@@ -152,15 +158,8 @@ public class WeatherExtension extends DashClockExtension {
 //                                                String chanceOfRain = todayForecast.getString("pop");
 //                                                body += "\n" + getString(R.string.chance_of_rain) + ": " + chanceOfRain + "%";
 
-                                                // Publish the extension data update.
-                                                publishUpdate(new ExtensionData()
-                                                        .visible(true)
-                                                        .icon(iconId)
-                                                        .status(curTempStr + degreeChar)
-                                                        .expandedTitle(curTempStr + degreeChar + " - " + curWeatherDesc)
-                                                        .expandedBody(body)
-//                                        .contentDescription("Completely different text for accessibility if needed.")
-                                                        .clickIntent(new Intent(Intent.ACTION_VIEW, Uri.parse(URL_REDIRECT + lat + "," + lon))));
+                                                publishWeatherInfo();
+
                                             } catch (Exception e) {
                                                 e.printStackTrace();
                                             }
@@ -183,6 +182,24 @@ public class WeatherExtension extends DashClockExtension {
 
                     }
                 });
+    }
+
+    private void publishWeatherInfo() {
+        String curTempStr;
+        if (isTempUnitC) {
+            curTempStr = new BigDecimal(curTempDoubleC).setScale(0, BigDecimal.ROUND_HALF_UP).toString();
+        } else {
+            curTempStr = new BigDecimal(curTempDoubleF).setScale(0, BigDecimal.ROUND_HALF_UP).toString();
+        }
+
+        publishUpdate(new ExtensionData()
+                .visible(true)
+                .icon(iconId)
+                .status(curTempStr + degreeChar)
+                .expandedTitle(curTempStr + degreeChar + " - " + curWeatherDesc)
+                .expandedBody(body)
+//                                        .contentDescription("Completely different text for accessibility if needed.")
+                .clickIntent(new Intent(Intent.ACTION_VIEW, Uri.parse(URL_REDIRECT + lat + "," + lon))));
     }
 
     private void publishErrorInfo(SharedUtil.SettingInvalidException e) {
@@ -279,33 +296,5 @@ public class WeatherExtension extends DashClockExtension {
                 break;
         }
         return iconId;
-    }
-
-    /**
-     * consumes latitude and longitude and returns location string
-     *
-     * @param lat latitude
-     * @param lon longitude
-     * @return City Name, State Name
-     * @throws IOException
-     */
-    private String getGeoStr(double lat, double lon) throws IOException {
-        LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-
-        List<String> providerList = locationManager.getAllProviders();
-        if (providerList != null && providerList.size() > 0) {
-            Geocoder geocoder = new Geocoder(getApplicationContext(), Locale.getDefault());
-            try {
-                List<Address> listAddresses = geocoder.getFromLocation(lat, lon, 1);
-                if (listAddresses != null && listAddresses.size() > 0) {
-                    Address myAddress = listAddresses.get(0);
-                    return myAddress.getLocality() + ", " + myAddress.getAdminArea();
-                }
-            } catch (IOException e) {
-                throw e;
-            }
-        }
-
-        throw new IOException();
     }
 }

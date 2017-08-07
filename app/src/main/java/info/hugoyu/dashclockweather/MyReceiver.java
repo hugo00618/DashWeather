@@ -3,6 +3,8 @@ package info.hugoyu.dashclockweather;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.google.android.apps.dashclock.api.DashClockExtension;
@@ -13,7 +15,10 @@ import com.google.android.apps.dashclock.api.DashClockExtension;
 
 public class MyReceiver extends BroadcastReceiver {
 
-    private static final int REFRESH_INTERVAL = 15; // refresh every 15 minutes
+    public static final int UPDATE_REASON_UI_PREF_CHANGED = 618;
+
+    private static final int REFRESH_INTERVAL_WEATHER = 15; // refresh weather every 15 minutes
+    private static final int REFRESH_INTERVAL_LOCATION = 60; // refresh location every 60 minutes
 
     private static MyReceiver myReceiver;
     private static WeatherExtension weatherExtension;
@@ -35,17 +40,31 @@ public class MyReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        switch(intent.getAction()) {
+        switch (intent.getAction()) {
             case Intent.ACTION_TIME_TICK:
                 Log.d("MyReceiver", "Time ticked");
                 tickCount++;
-                if (tickCount % REFRESH_INTERVAL == 0 && isSettingsValid) {
+
+                if (tickCount % REFRESH_INTERVAL_LOCATION == 0) {
+                    SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(context);
+                    boolean isGpsEnabled = sharedPrefs.getBoolean("gpsEnabled", false);
+
+                    if (isGpsEnabled) {
+                        SharedUtil.refreshLocation(context);
+                    }
+                }
+
+                if (tickCount % REFRESH_INTERVAL_WEATHER == 0 && isSettingsValid) {
                     weatherExtension.onUpdateData(DashClockExtension.UPDATE_REASON_PERIODIC);
                 }
                 break;
-            case "info.hugoyu.dashclockweather.SETTINGS_CHANGED":
+            case "info.hugoyu.dashclockweather.ACTION_REFETCH":
                 Log.d("MyReceiver", "Settings changed");
                 weatherExtension.onUpdateData(DashClockExtension.UPDATE_REASON_SETTINGS_CHANGED);
+                break;
+            case "info.hugoyu.dashclockweather.ACTION_REFRESH_UI_ONLY":
+                Log.d("MyReceiver", "UI pref changed");
+                weatherExtension.onUpdateData(UPDATE_REASON_UI_PREF_CHANGED);
                 break;
         }
     }
