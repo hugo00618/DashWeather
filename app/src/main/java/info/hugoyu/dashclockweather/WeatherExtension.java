@@ -81,7 +81,7 @@ public class WeatherExtension extends DashClockExtension {
                     publishWeatherInfo();
                     break;
                 default:
-//                    fetchAndPublishWeatherInfo();
+                    fetchAndPublishWeatherInfo();
                     break;
             }
         } catch (SharedUtil.SettingInvalidException e) {

@@ -38,7 +38,7 @@
                 android:value="Extension description" />
             <meta-data
                 android:name="settingsActivity"
-                android:value=".SettingsActivity" />
+                android:value="info.hugoyu.dashclockweather.MyPreferenceActivity" />
         </service>
 
         <activity android:name="info.hugoyu.dashclockweather.MyPreferenceActivity">
