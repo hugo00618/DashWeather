@@ -1,6 +1,8 @@
 <resources>
     <string name="app_name">DashWeather</string>
 
+    <string name="pref_bar_title">DashWeather Settings</string>
+
     <string name="pref_temp_unit_title">Temperature Unit</string>
     <string name="pref_temp_unit_value_c">\u00B0C</string>
     <string name="pref_temp_unit_value_f">\u00B0F</string>
