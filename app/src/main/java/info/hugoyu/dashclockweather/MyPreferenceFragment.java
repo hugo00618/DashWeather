@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.preference.EditTextPreference;
 import android.preference.ListPreference;
@@ -15,8 +16,10 @@ import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
 import android.preference.SwitchPreference;
 import android.provider.Settings;
+import android.support.annotation.RequiresApi;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
+import android.util.Log;
 import android.view.View;
 
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
@@ -34,6 +37,7 @@ import java.util.Arrays;
 public class MyPreferenceFragment extends PreferenceFragment implements SharedPreferences.OnSharedPreferenceChangeListener {
 
     static final int PLACE_AUTOCOMPLETE_REQUEST_CODE = 1;
+    static final int ACCESS_LOCATION_REQUEST_CODE = 2;
 
     // views
     ListPreference tempUnitPref;
@@ -104,6 +108,7 @@ public class MyPreferenceFragment extends PreferenceFragment implements SharedPr
 
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+        Log.d("onSharedPrefChanged", key);
         updatePreferenceSummary();
 
         switch (key) {
@@ -118,54 +123,46 @@ public class MyPreferenceFragment extends PreferenceFragment implements SharedPr
     }
 
     private void sendSettingsChangeBroadcast(String action) {
-        Intent intent = new Intent();
-        intent.setAction(action);
-        getActivity().sendBroadcast(intent);
+        if (isAdded()) { // if fragment is attached to activity
+            Intent intent = new Intent();
+            intent.setAction(action);
+            getActivity().sendBroadcast(intent);
+        }
     }
 
     private void updatePreferenceSummary() {
-        String tempUnitValue = sharedPrefs.getString("tempUnit", "C");
-        int tempUnitIdx = Arrays.asList(getResources().getStringArray(R.array.pref_temp_unit_values)).indexOf(tempUnitValue);
-        tempUnitPref.setSummary(getResources().getStringArray(R.array.pref_temp_unit_entries)[tempUnitIdx]);
+        if (isAdded()) { // if fragment is attached to activity
+            String tempUnitValue = sharedPrefs.getString("tempUnit", "C");
+            int tempUnitIdx = Arrays.asList(getResources().getStringArray(R.array.pref_temp_unit_values)).indexOf(tempUnitValue);
+            tempUnitPref.setSummary(getResources().getStringArray(R.array.pref_temp_unit_entries)[tempUnitIdx]);
 
-        if (sharedPrefs.getBoolean("gpsEnabled", false)) {
-            locPref.setEnabled(false);
-        } else {
-            locPref.setEnabled(true);
+            if (sharedPrefs.getBoolean("gpsEnabled", false)) {
+                locPref.setEnabled(false);
+            } else {
+                locPref.setEnabled(true);
+            }
+            locPref.setSummary(sharedPrefs.getString("loc", ""));
+
+            apiKeyPref.setSummary(sharedPrefs.getString("apiKey", ""));
         }
-        locPref.setSummary(sharedPrefs.getString("loc", ""));
-
-        apiKeyPref.setSummary(sharedPrefs.getString("apiKey", ""));
     }
 
     private void setPreferenceListeners() {
         // gps value change
         gpsEnabledPref.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+            @RequiresApi(api = Build.VERSION_CODES.M)
             @Override
             public boolean onPreferenceChange(Preference preference, Object newValue) {
 
                 if ((boolean) newValue) { // location enabled
                     // if permission is not granted
-                    if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                    if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
                             ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                        // pop error message
-                        Snackbar gpsNotGrantedSnackbar = Snackbar.make(getView(),
-                                getString(R.string.pref_error_title_permission_not_granted), Snackbar.LENGTH_LONG);
-                        gpsNotGrantedSnackbar.setAction(getString(R.string.pref_error_button_settings),
-                                new View.OnClickListener() {
-                                    @Override
-                                    public void onClick(View v) {
-                                        // go to app's setting page
-                                        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-                                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                        Uri uri = Uri.fromParts("package", context.getPackageName(), null);
-                                        intent.setData(uri);
-                                        startActivity(intent);
-                                    }
-                                });
-                        gpsNotGrantedSnackbar.show();
+                        // request permission
+                        requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION},
+                                ACCESS_LOCATION_REQUEST_CODE);
 
-                        // newValue doesn't get updated
+                        // do not switch on for now
                         return false;
                     }
 
@@ -193,5 +190,48 @@ public class MyPreferenceFragment extends PreferenceFragment implements SharedPr
                 return false;
             }
         });
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case ACCESS_LOCATION_REQUEST_CODE: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) { // permission granted
+                    // switch on toggle
+                    gpsEnabledPref.setChecked(true);
+
+                    // refresh location
+                    SharedUtil.refreshLocation(context);
+
+                    // refresh gpsEnabled
+                    SharedPreferences.Editor sharedPrefsEdit = sharedPrefs.edit();
+                    sharedPrefsEdit.putBoolean("gpsEnabled", true);
+                    sharedPrefsEdit.apply();
+
+                    // notify change
+                    onSharedPreferenceChanged(sharedPrefs, "loc");
+                } else {
+                    // permission denied, pop error message
+                    Snackbar gpsNotGrantedSnackbar = Snackbar.make(getView(),
+                            getString(R.string.pref_error_title_permission_not_granted), Snackbar.LENGTH_LONG);
+                    gpsNotGrantedSnackbar.setAction(getString(R.string.pref_error_button_settings),
+                            new View.OnClickListener() {
+                                @Override
+                                public void onClick(View v) {
+                                    // go to app's setting page
+                                    Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                    Uri uri = Uri.fromParts("package", context.getPackageName(), null);
+                                    intent.setData(uri);
+                                    startActivity(intent);
+                                }
+                            });
+                    gpsNotGrantedSnackbar.show();
+                }
+            }
+        }
     }
 }
